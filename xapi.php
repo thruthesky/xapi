@@ -9,10 +9,6 @@
  * License: GPL2+
  */
 
-header( 'Access-Control-Allow-Origin: *' );
-header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
-header( "Access-Control-Allow-Headers: X-AMZ-META-TOKEN-ID, X-AMZ-META-TOKEN-SECRET, Content-Type, Accept" );
-if ( $_SERVER['REQUEST_METHOD'] == 'OPTIONS' ) exit;
 
 
 if ( ! isset( $_REQUEST['xapi'] ) ) return;
@@ -20,13 +16,14 @@ $xapi = $_REQUEST['xapi'];
 $segments = explode( '.', $_REQUEST['xapi'] );
 if ( count($segments) != 2 ) wp_send_json_error('Wrong xapi code');
 
-
+// print_r( $_REQUEST );
 
 require_once dirname( __FILE__ ) . '/function.php';
 require_once dirname( __FILE__ ) . '/user.php';
 require_once dirname( __FILE__ ) . '/post.php';
 require_once dirname( __FILE__ ) . '/comment.php';
 require_once dirname( __FILE__ ) . '/file.php';
+require_once dirname( __FILE__ ) . '/wordpress.php';
 
 
 
