@@ -11,7 +11,16 @@
 
 
 
+
 if ( ! isset( $_REQUEST['xapi'] ) ) return;
+
+
+header( 'Access-Control-Allow-Origin: *' );
+header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS' );
+header( "Access-Control-Allow-Headers: X-AMZ-META-TOKEN-ID, X-AMZ-META-TOKEN-SECRET, Content-Type, Accept" );
+if ( $_SERVER['REQUEST_METHOD'] == 'OPTIONS' ) exit;
+
+
 $xapi = $_REQUEST['xapi'];
 $segments = explode( '.', $_REQUEST['xapi'] );
 if ( count($segments) != 2 ) wp_send_json_error('Wrong xapi code');
