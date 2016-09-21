@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name: XAPI
- * Description: WordPress REST API
+ * Plugin Name: xapi
+ * Description: WordPress REST API for backend web/app.
  * Author: WP REST API Team
  * Author URI: https://github.com/thruthesky/xapi
  * Version: 0.0.2
