@@ -10,8 +10,6 @@
  */
 
 
-
-
 if ( ! isset( $_REQUEST['xapi'] ) ) return;
 
 
@@ -34,11 +32,7 @@ require_once dirname( __FILE__ ) . '/comment.php';
 require_once dirname( __FILE__ ) . '/file.php';
 require_once dirname( __FILE__ ) . '/wordpress.php';
 
-
-
 xlog("xapi begins with '$_REQUEST[xapi]'");
-
-
 
 if ( $json = xapi_get_json_post() ) $_REQUEST = array_merge( $_REQUEST, $json );
 
