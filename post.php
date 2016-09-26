@@ -45,6 +45,9 @@ class XPost {
     public function create() {
         return @wp_insert_post( self::$post_data );
     }
+    public function update() {
+        return @wp_update_post( self::$post_data );
+    }
 
 
     /**
@@ -65,10 +68,23 @@ class XPost {
      *
      *
      * @attention it gets 'file_id' as attachment id and set the parent of the attachment to this post.
+     *
+     * @attention if $_REQUEST['file_id'] is set and $_REQUEST['single_image'] is set to 1,
+     *      then it will delete all the previous images.
+     *      which means, it only maintains one last image.
      */
     public function insert() {
         xlog( $_REQUEST );
         $this->check_insert_input();
+        if ( isset($_REQUEST['ID']) ) $post_ID = $_REQUEST['ID'];
+        else $post_ID = 0;
+        if ( $post_ID ) {
+            if ( ! isset( $_REQUEST['password'] ) || empty( $_REQUEST['password']) ) wp_send_json_error( 'input password' );
+            $password = $_REQUEST['password'];
+            $old_password = get_post_meta( $post_ID, 'password', true );
+            if ( $password != $old_password ) wp_send_json_error( 'wrong password' );
+        }
+
         $category = get_category_by_slug($_REQUEST['category']);
         if ( $category === false ) wp_send_json_error( 'category does not exists' );
         $this
@@ -81,16 +97,36 @@ class XPost {
             $this->set('post_author', wp_get_current_user()->ID);
         }
 
-        $post_ID = $this->create();
+        if ( $post_ID ) {
+            $this
+                ->set('ID', $post_ID)
+                ->update();
+        }
+        else {
+            $post_ID = $this->create();
+        }
+
         if ( is_wp_error( $post_ID ) ) wp_send_json_error( xerror( $post_ID ) );
         self::load( $post_ID );
         $this->saveMeta();
 
         if ( isset( $_REQUEST['file_id'] ) && $_REQUEST['file_id'] ) {
+            if ( $_REQUEST['single_image'] ) {
+                $images = get_attached_media('image', $post_ID);
+                if ( $images ) {
+                    foreach ( $images as $ID => $image ) {
+                        $re = @wp_delete_post( $ID );
+                        if ( !$re ) {
+                            // error
+                            // @todo warning if code comes here, it is an error.
+                            xlog("ERROR: XPost::insert()");
+                        }
+                    }
+                }
+            }
             $data = [ 'ID' => $_REQUEST['file_id'], 'post_parent' => $post_ID ];
             $attach_id = @wp_update_post( $data );
             if ( $attach_id == 0 || is_wp_error( $attach_id ) ) wp_send_json_error( xerror( $attach_id ) );
-
         }
         wp_send_json_success( $post_ID );
     }
