@@ -14,7 +14,7 @@ class XWordpress {
         $ret = new stdClass();
         if ( $data && $data->posts ) {
             foreach ( $data->posts as $p ) {
-                $this->trimJson($p);
+                $this->jsonPost($p);
                 $p->meta = get_post_meta( $p->ID );
             }
             $ret->found_posts = $data->found_posts;
@@ -26,6 +26,43 @@ class XWordpress {
     }
 
 
+    public function get_categories() {
+        wp_send_json_success( get_categories() );
+    }
+
+
+    public function get_user_by() {
+        $field = $_REQUEST['field'];
+        $value = $_REQUEST['value'];
+        $raw = WP_User::get_data_by($field, $value);
+        unset(
+            $raw->display_name,
+            $raw->user_activation_key,
+            $raw->user_pass,
+            $raw->user_status,
+            $raw->user_url
+        );
+
+        $meta = get_user_meta( $raw->ID );
+        unset(
+            $meta['admin_color'],
+            $meta['comment_shortcuts'],
+            $meta['description'],
+            $meta['rich_editing'],
+            $meta['show_admin_bar_front'],
+            $meta['use_ssl'],
+            $meta['wp_capabilities'],
+            $meta['wp_user_level']
+        );
+        $raw->meta = array_map( function( $a ){ return $a[0]; }, $meta );
+
+        $user = new XUser($raw->ID );
+        $raw->session_id = $user->get_session_id( $user );
+
+
+        wp_send_json_success( $raw );
+    }
+
 
 
     /**
@@ -35,13 +72,13 @@ class XWordpress {
         $post_ID = $_REQUEST['post_ID'];
         if ( empty( $post_ID ) ) wp_send_json_error('post_ID_is_empty');
         $post = get_post( $post_ID );
-        $this->trimJson( $post );
+        $this->jsonPost( $post );
         $post->meta = get_post_meta( $post->ID );
         $images = get_attached_media( 'image', $post->ID );
         if ( $images ) {
             $post->images = [];
             foreach ( $images as $ID => $image ) {
-                $this->trimJson($image);
+                $this->jsonPost($image);
                 $post->images[] = $image;
             }
         }
@@ -84,11 +121,15 @@ class XWordpress {
         }
     }
 
+
+
     /**
+     *
+     *
      *
      * @param $p
      */
-    public function trimJson( $p ) {
+    public function jsonPost( $p ) {
         unset(
             $p->comment_status,
             $p->filter,
