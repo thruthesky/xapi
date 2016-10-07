@@ -1,7 +1,9 @@
 <?php
 /**
+ * 
  * @file wordpress.php
  * @desc This class is proxying WordPress functions.
+ *
  */
 class XWordpress {
     public function wp_query() {
