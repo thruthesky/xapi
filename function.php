@@ -92,3 +92,6 @@ function xapi_get_safe_filename($filename) {
     if ( isset($pi['extension']) && $pi['extension'] ) return $sanitized . '.' . $pi['extension'];
     else return $sanitized;
 }
+
+
+

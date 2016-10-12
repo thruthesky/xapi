@@ -54,6 +54,7 @@ if ( isset( $_REQUEST['session_id'] ) ) {
 }
 
 list ( $class, $method ) = $segments;
+if ( $class == 'wp' ) $class = 'Wordpress';
 if ( $method == 'list' ) $method = '__list';
 $class = 'X' . ucfirst( $class );
 

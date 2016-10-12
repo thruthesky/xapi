@@ -43,5 +43,5 @@ function get_nested_comments_with_meta( $comment, $args, $depth ) {
     $parent_comment = null;
     //if ( $comment->comment_parent ) $parent_comment = get_comment($comment->comment_parent);
     $comment->depth = $depth;
-    comment::$nest_comments[] = $comment;
+    XComment::$nest_comments[] = $comment;
 }

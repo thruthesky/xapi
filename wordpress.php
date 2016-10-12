@@ -1,8 +1,12 @@
 <?php
 /**
- * 
+ *
+ * Wordpress Proxy Class
+ *
+ * @author JaeHo Song thruthesky@gmail.com
  * @file wordpress.php
- * @desc This class is proxying WordPress functions.
+ * @description This class is proxy class of WordPress functions.
+ *
  *
  */
 class XWordpress {
@@ -12,12 +16,18 @@ class XWordpress {
         $data = $this->getWPQueryJsonData( $data );
         wp_send_json_success($data);
     }
+
+    /**
+     * Use this method after querying to database with 'WP_Query()'
+     * @param $data - is the result of WP_Query()
+     * @return stdClass - sanitized data which contains better result of WP_Query.
+     */
     public function getWPQueryJsonData( $data ) {
         $ret = new stdClass();
         if ( $data && $data->posts ) {
             foreach ( $data->posts as $p ) {
                 $this->jsonPost($p);
-                $p->meta = get_post_meta( $p->ID );
+                $p->meta = array_map( function( $a ){ return $a[0]; }, get_post_meta( $p->ID ) );
             }
             $ret->found_posts = $data->found_posts;
             $ret->max_num_pages = $data->max_num_pages;
@@ -75,19 +85,41 @@ class XWordpress {
         if ( empty( $post_ID ) ) wp_send_json_error('post_ID_is_empty');
         $post = get_post( $post_ID );
         $this->jsonPost( $post );
-        $post->meta = get_post_meta( $post->ID );
-        $images = get_attached_media( 'image', $post->ID );
-        if ( $images ) {
-            $post->images = [];
-            foreach ( $images as $ID => $image ) {
-                $this->jsonPost($image);
-                $post->images[] = $image;
-            }
-        }
-        if ( isset( $post->meta['password'] ) ) unset($post->meta['password']);
         wp_send_json_success( $post );
     }
 
+
+
+    /**
+     *
+     * Echoes posts in json string.
+     *
+     * @note this method is a proxy of wordpress 'get_posts' function.
+     * @note it adds author's nicename to 'author_name' property.
+     * @note 'meta' property is attached which holds all the meta data of the post.
+     *          - 'meta' property does not contains array. it just hold single value.
+     *              ex) post.meta.key_name
+     *
+     * @code how to call from URI
+     *      http://work.org/wordpress/index.php?xapi=wp.get_posts&category_name=housemaid&paged=1&per_page=20
+     * @endcodes
+     *
+     */
+    public function get_posts() {
+            $args = [
+                'category_name' => $_REQUEST['category_name'],
+                'posts_per_page' => in('per_page', 10),
+                'paged' => in('paged'),
+            ];
+            $_posts = get_posts($args);
+            $posts = [];
+
+            foreach( $_posts as $post ) {
+                $posts[] = $this->jsonPost( $post );
+            }
+            wp_send_json_success( $posts );
+
+    }
 
     /**
      * This proxies wp_delete_post() upon ionic 2 - xapi client-end.
@@ -124,12 +156,12 @@ class XWordpress {
     }
 
 
-
     /**
      *
-     *
+     * Unsets data that are not needed by client.
      *
      * @param $p
+     * @return mixed
      */
     public function jsonPost( $p ) {
         unset(
@@ -150,5 +182,33 @@ class XWordpress {
             $p->post_type,
             $p->to_ping
         );
+
+        $p->post_date = $this->human_datetime( $p->post_date );
+        if ( $p->post_author ) {
+            $user = get_user_by('id', $p->post_author);
+            $p->author_name = $user->user_nicename;
+        }
+
+        $p->meta = array_map( function( $a ){ return $a[0]; }, get_post_meta( $p->ID ) );
+
+        $comment = new XComment();
+        $p->comments = $comment->get_nested_comments_with_meta( $p->ID );
+        $images = get_attached_media( 'image', $p->ID );
+        if ( $images ) {
+            $p->images = [];
+            foreach ( $images as $image ) {
+                $p->images[] = $image->guid;
+            }
+        }
+
+        return $p;
     }
+
+
+    function human_datetime( $date ) {
+        $time = strtotime( $date );
+        if ( date('Ymd') == date('Ymd', $time) ) return date("h:i a", $time);
+        else return date("Y-m-d");
+    }
+
 }
