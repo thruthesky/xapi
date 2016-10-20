@@ -78,6 +78,8 @@ class XPost {
         $this->check_insert_input();
         if ( isset($_REQUEST['ID']) ) $post_ID = $_REQUEST['ID'];
         else $post_ID = 0;
+        if ( isset( $_REQUEST['post_content'] ) ) $post_content = $_REQUEST['post_content'];
+        else $post_content = '';
         if ( $post_ID ) {
             if ( ! isset( $_REQUEST['password'] ) || empty( $_REQUEST['password']) ) wp_send_json_error( 'input password' );
             $password = $_REQUEST['password'];
@@ -89,8 +91,8 @@ class XPost {
         if ( $category === false ) wp_send_json_error( 'category does not exists' );
         $this
             ->set('post_category', [ $category->term_id ])
-            ->set('post_title', $_REQUEST['title'])
-            ->set('post_content', $_REQUEST['content'])
+            ->set('post_title', $_REQUEST['post_title'])
+            ->set('post_content', $post_content)
             ->set('post_status', 'publish');
 
         if ( is_user_logged_in() ) {
@@ -110,6 +112,15 @@ class XPost {
         self::load( $post_ID );
         $this->saveMeta();
 
+        if ( isset( $_REQUEST['fid'] ) && is_array( $_REQUEST['fid'] ) ) {
+            foreach( $_REQUEST['fid'] as $file_id ) {
+                $data = [ 'ID' => $file_id, 'post_parent' => $post_ID ];
+                $attach_id = @wp_update_post( $data );
+                if ( $attach_id == 0 || is_wp_error( $attach_id ) ) wp_send_json_error( xerror( $attach_id ) );
+            }
+        }
+
+        /*
         if ( isset( $_REQUEST['file_id'] ) && $_REQUEST['file_id'] ) {
             if ( $_REQUEST['single_image'] ) {
                 $images = get_attached_media('image', $post_ID);
@@ -128,6 +139,7 @@ class XPost {
             $attach_id = @wp_update_post( $data );
             if ( $attach_id == 0 || is_wp_error( $attach_id ) ) wp_send_json_error( xerror( $attach_id ) );
         }
+        */
         wp_send_json_success( $post_ID );
     }
 
@@ -274,8 +286,7 @@ class XPost {
     private function check_insert_input()
     {
         $keys = [
-            'category', 'title', 'content',
-            'first_name',
+            'category', 'post_title'
         ];
         foreach ( $keys as $k ) {
             if ( ! isset( $_REQUEST[$k] ) || empty( $_REQUEST[$k] ) ) {

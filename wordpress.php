@@ -106,11 +106,13 @@ class XWordpress {
      *
      */
     public function get_posts() {
+
             $args = [
-                'category_name' => $_REQUEST['category_name'],
                 'posts_per_page' => in('per_page', 10),
                 'paged' => in('paged'),
             ];
+            if ( isset($_REQUEST['category_name']) ) $args['category_name'] = $_REQUEST['category_name'];
+
             $_posts = get_posts($args);
             $posts = [];
 
@@ -210,5 +212,16 @@ class XWordpress {
         if ( date('Ymd') == date('Ymd', $time) ) return date("h:i a", $time);
         else return date("Y-m-d");
     }
+
+
+    function delete_attachment() {
+        $id = $_REQUEST['id'];
+        if ( empty($id) ) wp_send_json_error(['message'=>'id is empty']);
+        $post = @get_post( $id );
+        if ( empty($post) ) wp_send_json_error( ['id' => $id, 'message' => 'attachment does not exists'] );
+        if ( false === wp_delete_attachment( $id, true ) ) wp_send_json_error( [ 'id' => $id, 'message' => 'failed to delete file' ] );
+        else wp_send_json_success( $id );
+    }
+
 
 }
