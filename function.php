@@ -18,8 +18,15 @@ function xerror( $thing ) {
 function xapi_get_query_vars() {
     return ['xapi', 'session_id'];
 }
-function xapi_post_query_vars() {
-    return ['xapi', 'session_id', 'category', 'title', 'content'];
+
+/**
+ *
+ * Returns HTTP query names to exclude for saving meta data.
+ *
+ * @return array
+ */
+function xapi_post_query_meta_exclude_vars() {
+    return ['xapi', 'session_id', 'category', 'title', 'content', 'fid', 'meta'];
 }
 
 

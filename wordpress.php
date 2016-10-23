@@ -199,7 +199,7 @@ class XWordpress {
         if ( $images ) {
             $p->images = [];
             foreach ( $images as $image ) {
-                $p->images[] = $image->guid;
+                $p->images[ $image->ID ] = $image->guid;
             }
         }
 
