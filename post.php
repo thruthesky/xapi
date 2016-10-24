@@ -122,16 +122,23 @@ class XPost {
         }
 
         if ( is_wp_error( $post_ID ) ) wp_send_json_error( xerror( $post_ID ) );
+
+
         self::load( $post_ID );
         $this->saveMeta();
 
         if ( isset( $_REQUEST['fid'] ) && is_array( $_REQUEST['fid'] ) ) {
             foreach( $_REQUEST['fid'] as $file_id ) {
+                if ( empty($file_id) ) continue;
                 $data = [ 'ID' => $file_id, 'post_parent' => $post_ID ];
                 $attach_id = @wp_update_post( $data );
-                if ( $attach_id == 0 || is_wp_error( $attach_id ) ) wp_send_json_error( xerror( $attach_id ) );
+                if ( $attach_id == 0 || is_wp_error( $attach_id ) ) {
+                    wp_send_json_error(xerror($attach_id));
+                }
             }
         }
+
+
 
         /*
         if ( isset( $_REQUEST['file_id'] ) && $_REQUEST['file_id'] ) {

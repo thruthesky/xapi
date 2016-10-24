@@ -44,14 +44,16 @@ add_filter('send_password_change_email', function() {
 
 
 
+
 xlog("xapi begins with '$_REQUEST[xapi]'");
 
 if ( $json = xapi_get_json_post() ) $_REQUEST = array_merge( $_REQUEST, $json );
-
-if ( isset( $_REQUEST['session_id'] ) && $_REQUEST['session_id'] && $_REQUEST['session_id'] != 'undefined' ) {
+if ( isset($_REQUEST['session_id']) && $_REQUEST['session_id']  == 'undefined' ) unset( $_REQUEST['session_id'] );
+if ( isset( $_REQUEST['session_id'] ) && $_REQUEST['session_id'] ) {
 	$user = new XUser();
 	$user->authenticate();
 }
+
 
 list ( $class, $method ) = $segments;
 if ( $class == 'wp' ) $class = 'Wordpress';
