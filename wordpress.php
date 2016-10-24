@@ -202,7 +202,6 @@ class XWordpress {
                 $p->images[ $image->ID ] = $image->guid;
             }
         }
-
         return $p;
     }
 

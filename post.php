@@ -76,15 +76,28 @@ class XPost {
     public function insert() {
         xlog( $_REQUEST );
         $this->check_insert_input();
-        if ( isset($_REQUEST['ID']) ) $post_ID = $_REQUEST['ID'];
+        if ( isset($_REQUEST['ID']) && is_numeric( $_REQUEST['ID']) ) $post_ID = $_REQUEST['ID'];
         else $post_ID = 0;
         if ( isset( $_REQUEST['post_content'] ) ) $post_content = $_REQUEST['post_content'];
         else $post_content = '';
-        if ( $post_ID ) {
-            if ( ! isset( $_REQUEST['password'] ) || empty( $_REQUEST['password']) ) wp_send_json_error( 'input password' );
-            $password = $_REQUEST['password'];
-            $old_password = get_post_meta( $post_ID, 'password', true );
-            if ( $password != $old_password ) wp_send_json_error( 'wrong password' );
+        if ( $post_ID ) { // 글 수정
+
+            $post = get_post( $post_ID );
+            if ( $post ) {
+                if ( $post->post_author ) { // 글의 소유주가 회원인 경우,
+                    if ( is_user_logged_in() ) { // 로그인 되었으면 개인 소유 정보 확인
+                        if ( wp_get_current_user()->ID != $post->post_author ) wp_send_json_error('You are not the owner of the post.');
+                    }
+                    else wp_send_json_error('This post is owned by a member. Login first before you edit.');
+                }
+                else { // 입력된 비밀번호로  확인
+                    if ( ! isset( $_REQUEST['password'] ) || empty( $_REQUEST['password']) ) wp_send_json_error( 'input password' );
+                    $password = $_REQUEST['password'];
+                    $old_password = get_post_meta( $post_ID, 'password', true );
+                    if ( $password != $old_password ) wp_send_json_error( 'wrong password' );
+                }
+            }
+
         }
 
         $category = get_category_by_slug($_REQUEST['category']);
